@@ -21,6 +21,7 @@ textarea{min-height:80px}
 button{border:0;border-radius:16px;padding:14px 18px;font-size:16px;font-weight:900;color:white;background:#5d4333}
 .guardar{background:#5ca33f}
 .borrar{background:#c00000}
+.calcular{background:#5d8091}
 .articulo{border-left:7px solid #5d8091}
 .articulo h3{margin:0 0 8px;color:#5d4333}
 .dato{font-weight:700;margin:4px 0;color:#333}
@@ -28,6 +29,7 @@ button{border:0;border-radius:16px;padding:14px 18px;font-size:16px;font-weight:
 .resumen{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px}
 .cajaResumen{background:white;border-radius:18px;padding:16px;text-align:center;font-weight:900;box-shadow:0 8px 18px rgba(0,0,0,.09)}
 .cajaResumen span{display:block;font-size:26px;color:#5d4333;margin-top:6px}
+.aviso{background:#fff6dc;border-left:7px solid #d9a300;border-radius:16px;padding:14px;margin-top:14px;font-weight:800}
 @media(max-width:760px){
 .grid{grid-template-columns:1fr}
 .resumen{grid-template-columns:1fr}
@@ -46,7 +48,7 @@ button{border:0;border-radius:16px;padding:14px 18px;font-size:16px;font-weight:
 
 <div class="resumen">
 <div class="cajaResumen">Artículos<span id="totalArticulos">0</span></div>
-<div class="cajaResumen">Valor compra<span id="valorCompra">0,00 €</span></div>
+<div class="cajaResumen">Valor compra real<span id="valorCompra">0,00 €</span></div>
 </div>
 
 <div class="card">
@@ -68,14 +70,64 @@ button{border:0;border-radius:16px;padding:14px 18px;font-size:16px;font-weight:
 
 <div class="grid">
 <div>
-<label>Precio compra</label>
-<input id="precioCompra" type="number" step="0.01" placeholder="0.00">
+<label>Precio compra base sin IVA</label>
+<input id="precioCompra" type="number" step="0.01" placeholder="0.00" oninput="calcularPrecio()">
 </div>
 
 <div>
-<label>Precio venta</label>
+<label>Multiplicador margen</label>
+<select id="multiplicador" onchange="calcularPrecio()">
+<option value="2">x2</option>
+<option value="2.3">x2,3</option>
+<option value="2.5" selected>x2,5</option>
+<option value="3">x3</option>
+</select>
+</div>
+</div>
+
+<div class="grid">
+<div>
+<label>IVA compra</label>
+<input id="ivaCompra" type="number" step="0.01" value="21" oninput="calcularPrecio()">
+</div>
+
+<div>
+<label>Recargo equivalencia</label>
+<input id="recargoEquivalencia" type="number" step="0.01" value="5.2" oninput="calcularPrecio()">
+</div>
+</div>
+
+<div class="grid">
+<div>
+<label>Coste real pagado</label>
+<input id="costeReal" type="number" step="0.01" readonly>
+</div>
+
+<div>
+<label>PVP recomendado</label>
+<input id="pvpRecomendado" type="number" step="0.01" readonly>
+</div>
+</div>
+
+<div class="grid">
+<div>
+<label>Precio venta final</label>
 <input id="precioVenta" type="number" step="0.01" placeholder="0.00">
 </div>
+
+<div>
+<label>Beneficio estimado</label>
+<input id="beneficioEstimado" type="text" readonly>
+</div>
+</div>
+
+<div class="botones">
+<button class="calcular" onclick="aplicarPvp()">APLICAR PVP RECOMENDADO</button>
+</div>
+
+<div class="aviso">
+Método usado: coste real = compra base + IVA + recargo equivalencia.  
+Después se aplica el multiplicador elegido y se redondea a precio comercial.
 </div>
 
 <label>Código de barras / referencia opcional</label>
@@ -125,13 +177,45 @@ select.innerHTML = `<option value="">Sin proveedor</option>` + proveedores.map(p
 `).join("");
 }
 
+function redondearComercial(n){
+if(!n || n <= 0) return 0;
+return Math.ceil(n) - 0.05;
+}
+
+function calcularPrecio(){
+const base = Number(document.getElementById("precioCompra").value || 0);
+const iva = Number(document.getElementById("ivaCompra").value || 0);
+const recargo = Number(document.getElementById("recargoEquivalencia").value || 0);
+const multiplicador = Number(document.getElementById("multiplicador").value || 2.5);
+
+const costeReal = base + (base * iva / 100) + (base * recargo / 100);
+const pvp = redondearComercial(costeReal * multiplicador);
+const beneficio = pvp - costeReal;
+
+document.getElementById("costeReal").value = costeReal.toFixed(2);
+document.getElementById("pvpRecomendado").value = pvp.toFixed(2);
+document.getElementById("beneficioEstimado").value = dinero(beneficio);
+}
+
+function aplicarPvp(){
+calcularPrecio();
+document.getElementById("precioVenta").value = document.getElementById("pvpRecomendado").value;
+}
+
 function guardarArticulo(){
+
+calcularPrecio();
 
 const articulo = {
 id: editandoId || Date.now(),
 nombre: document.getElementById("nombre").value.trim(),
 proveedor: document.getElementById("proveedor").value,
 precioCompra: Number(document.getElementById("precioCompra").value || 0),
+ivaCompra: Number(document.getElementById("ivaCompra").value || 21),
+recargoEquivalencia: Number(document.getElementById("recargoEquivalencia").value || 5.2),
+costeReal: Number(document.getElementById("costeReal").value || 0),
+multiplicador: Number(document.getElementById("multiplicador").value || 2.5),
+pvpRecomendado: Number(document.getElementById("pvpRecomendado").value || 0),
 precioVenta: Number(document.getElementById("precioVenta").value || 0),
 codigoBarras: document.getElementById("codigoBarras").value.trim(),
 observaciones: document.getElementById("observaciones").value.trim(),
@@ -166,9 +250,14 @@ editandoId = id;
 document.getElementById("nombre").value = a.nombre || "";
 document.getElementById("proveedor").value = a.proveedor || "";
 document.getElementById("precioCompra").value = a.precioCompra || "";
+document.getElementById("ivaCompra").value = a.ivaCompra || 21;
+document.getElementById("recargoEquivalencia").value = a.recargoEquivalencia || 5.2;
+document.getElementById("multiplicador").value = a.multiplicador || 2.5;
 document.getElementById("precioVenta").value = a.precioVenta || "";
 document.getElementById("codigoBarras").value = a.codigoBarras || "";
 document.getElementById("observaciones").value = a.observaciones || "";
+
+calcularPrecio();
 
 window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -189,7 +278,13 @@ editandoId = null;
 document.getElementById("nombre").value = "";
 document.getElementById("proveedor").value = "";
 document.getElementById("precioCompra").value = "";
+document.getElementById("ivaCompra").value = "21";
+document.getElementById("recargoEquivalencia").value = "5.2";
+document.getElementById("multiplicador").value = "2.5";
+document.getElementById("costeReal").value = "";
+document.getElementById("pvpRecomendado").value = "";
 document.getElementById("precioVenta").value = "";
+document.getElementById("beneficioEstimado").value = "";
 document.getElementById("codigoBarras").value = "";
 document.getElementById("observaciones").value = "";
 }
@@ -197,7 +292,7 @@ document.getElementById("observaciones").value = "";
 function pintarResumen(datos){
 
 const total = datos.length;
-const valorCompra = datos.reduce((s,a)=>s + Number(a.precioCompra || 0),0);
+const valorCompra = datos.reduce((s,a)=>s + Number(a.costeReal || a.precioCompra || 0),0);
 
 document.getElementById("totalArticulos").textContent = total;
 document.getElementById("valorCompra").textContent = dinero(valorCompra);
@@ -219,8 +314,14 @@ lista.innerHTML = datos.map(a => `
 <div class="card articulo">
 <h3>${a.nombre}</h3>
 <div class="dato">🚚 Proveedor: ${a.proveedor || "Sin proveedor"}</div>
-<div class="dato">💶 Compra: ${dinero(a.precioCompra)}</div>
-<div class="dato">🏷️ Venta: ${dinero(a.precioVenta)}</div>
+<div class="dato">💶 Compra base: ${dinero(a.precioCompra)}</div>
+<div class="dato">🧾 IVA compra: ${a.ivaCompra || 21}%</div>
+<div class="dato">➕ Recargo equivalencia: ${a.recargoEquivalencia || 5.2}%</div>
+<div class="dato">📦 Coste real pagado: ${dinero(a.costeReal || a.precioCompra)}</div>
+<div class="dato">✖️ Multiplicador: x${a.multiplicador || 2.5}</div>
+<div class="dato">💡 PVP recomendado: ${dinero(a.pvpRecomendado)}</div>
+<div class="dato">🏷️ Venta final: ${dinero(a.precioVenta)}</div>
+<div class="dato">📈 Beneficio estimado: ${dinero(Number(a.precioVenta || 0) - Number(a.costeReal || 0))}</div>
 <div class="dato">🔖 Código / referencia: ${a.codigoBarras || "Sin código"}</div>
 <div class="dato">📝 ${a.observaciones || "Sin observaciones"}</div>
 <div class="dato">📅 ${a.fecha || ""}</div>
