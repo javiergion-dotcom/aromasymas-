@@ -45,7 +45,7 @@ pointer-events:none;
 }
 
 header::after{
-content:"🌿";
+content:"";
 position:absolute;
 right:18px;
 top:8px;
@@ -93,6 +93,14 @@ font-size:15px;
 font-weight:800;
 color:#315c35;
 border-bottom:1px solid rgba(49,92,53,.12);
+}
+
+.desarrollado{
+text-align:center;
+font-size:14px;
+font-weight:700;
+color:#6f8a43;
+margin:10px 0 18px 0;
 }
 
 .panel{
@@ -218,7 +226,9 @@ border-radius:24px;
 <div class="franja">
 Solución inteligente para la gestión de comercios.
 </div>
-<div style="text-align:center;font-size:14px;font-weight:700;color:#6f8a43;margin:10px 0 18px 0;">Desarrollado por Javier Gion</div>
+
+<div class="desarrollado">Desarrollado por Javier Gion</div>
+
 <div class="panel">
 
 <div class="boton blanco" onclick="abrir('proveedores.html')">
@@ -262,34 +272,34 @@ Solución inteligente para la gestión de comercios.
 </div>
 
 <div class="boton amarillo" onclick="abrir('recepcion.html')">
-<div class="icono">📦</div>
+<div class="icono">📥</div>
 <div>RECEPCIÓN</div>
 </div>
 
 <div class="boton verde" onclick="abrir('copiaseguridad.html')">
-<div class="icono">💾</div>
+<div class="icono">🛡️</div>
 <div>COPIA SEGURIDAD</div>
 </div>
 
 </div>
 
 <div class="bloque">
-<div class="nombre">Aromas y Más</div>
+<div class="nombre">MOIRA ALLWAYS CLOUD</div>
 
 <div class="frase">
-La organización también puede ser natural.
+La gestión del comercio, clara y sencilla.
 </div>
 
 <div class="texto">
-Controla artículos, pagos, pedidos, ventas, recepción de mercancía y copias de seguridad de forma rápida y clara.
-Un sistema pensado para trabajar de manera cómoda, ordenada y tranquila.
+Controla artículos, proveedores, pedidos, pagos, ventas, recepción de mercancía y copias de seguridad de forma rápida y ordenada.
+<br><br>
+Un sistema pensado para trabajar de manera cómoda, clara y tranquila.
 </div>
 </div>
 
 <script>
 function reloj(){
 const d = new Date();
-
 document.getElementById("hora").innerHTML =
 d.toLocaleDateString("es-ES") +
 " · " +
